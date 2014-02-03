@@ -111,16 +111,18 @@ namespace App13___compressHelper
         }
 
 
+        public StorageFolder selectedFolder;
         private async Task extractCompressedFile_ReaderFactory(StorageFile sourceCompressedFile)      //, StorageFolder destinationFolder
         {
             using (Stream fileStream = await sourceCompressedFile.OpenStreamForReadAsync())
             {
                 var Reader = ReaderFactory.Open(fileStream);
-                StorageFolder folder = await ApplicationData.Current.LocalFolder.CreateFolderAsync(sourceCompressedFile.DisplayName, CreationCollisionOption.FailIfExists);
+                StorageFolder folder = await ApplicationData.Current.LocalFolder.CreateFolderAsync(sourceCompressedFile.DisplayName, CreationCollisionOption.OpenIfExists);
 
                 //foreach (var entry in archive.Entries)
                 while (Reader.MoveToNextEntry())
                 {
+                    selectedFolder = folder;
                     if (!Reader.Entry.IsDirectory)
                     {
                         if (Reader.Entry.FilePath.Contains("/"))
@@ -130,10 +132,35 @@ namespace App13___compressHelper
 
                             foreach (var item in splitedPath)
                             {
+                                if (item == splitedPath.First() && !(item == splitedPath.Last()))
+                                {
+                                    StorageFolder sf = await selectedFolder.CreateFolderAsync(item, CreationCollisionOption.OpenIfExists);
+                                    selectedFolder = sf;
+                                }
+                                else if (!(item == splitedPath.Last()))
+                                {
+                                    StorageFolder sf1 = await selectedFolder.CreateFolderAsync(item, CreationCollisionOption.OpenIfExists);
+                                    selectedFolder = sf1;
+                                    //StorageFolder sf1 = await sf.createfol
+                                }
+                                else if (item == splitedPath.Last())
+                                {
+                                    StorageFile file = await selectedFolder.CreateFileAsync(FileName, CreationCollisionOption.OpenIfExists);
+                                    Stream newFileStream = await file.OpenStreamForWriteAsync();
 
+                                    MemoryStream streamEntry = new MemoryStream();
+                                    Reader.WriteEntryTo(streamEntry);
+                                    //entry.WriteTo(streamEntry);
+                                    // buffer for extraction data
+                                    byte[] data = streamEntry.ToArray();
+
+                                    newFileStream.Write(data, 0, data.Length);
+                                    newFileStream.Flush();
+                                    newFileStream.Dispose();
+                                }
                             }
                         }
-
+                        #region commented old code
                         //StorageFile newFile = await folder.CreateFileAsync(Reader.Entry.FilePath, CreationCollisionOption.FailIfExists);
                         //Stream newFileStream = await newFile.OpenStreamForWriteAsync();
 
@@ -146,9 +173,59 @@ namespace App13___compressHelper
                         //newFileStream.Write(data, 0, data.Length);
                         //newFileStream.Flush();
                         //newFileStream.Dispose();
+                        #endregion
                     }
                     else if (Reader.Entry.IsDirectory)
                     {
+                        if (Reader.Entry.FilePath.Contains("/"))
+                        {
+                            string[] splitedPathWithBlank = Reader.Entry.FilePath.Split('/');
+                            string FolderName = splitedPathWithBlank[splitedPathWithBlank.Length - 2];    // can also be written as splitedPath[splitedPath.count() - 2]
+                            List<string> splitedPath = new List<string>();
+                            List<string> splitedPathFinal = new List<string>();
+
+                            foreach (var item in splitedPathWithBlank)
+                            {
+                                if (!(item == splitedPathWithBlank.Last()))
+                                {
+                                    splitedPath.Add(item);
+                                }
+                            }
+
+                            var i = 1;
+                            foreach (var item in splitedPath)
+                            {
+                                if (!(i == splitedPath.Count()))
+                                {
+                                    splitedPathFinal.Add(item);
+                                    //item = item + ".last";
+                                }
+                                else
+                                {
+                                    splitedPathFinal.Add(item + ".last");
+                                }
+                                i++;
+                            }
+
+                            foreach (var item in splitedPathFinal)
+                            {
+                                if (item == splitedPathFinal.First() && item != splitedPathFinal.Last())
+                                {
+                                    StorageFolder sf = await selectedFolder.CreateFolderAsync(item, CreationCollisionOption.OpenIfExists);
+                                    selectedFolder = sf;
+                                }
+                                else if (item != splitedPathFinal.Last())
+                                {
+                                    StorageFolder sf1 = await selectedFolder.CreateFolderAsync(item, CreationCollisionOption.OpenIfExists);
+                                    selectedFolder = sf1;
+                                }
+                                else if (item == splitedPathFinal.Last())
+                                {
+                                    StorageFolder sfLast = await selectedFolder.CreateFolderAsync(FolderName, CreationCollisionOption.OpenIfExists);
+                                }
+                            }
+                        }
+
                         //StorageFolder newFolder = await folder.CreateFolderAsync(Reader.Entry.FilePath, CreationCollisionOption.ReplaceExisting);
                     }
                 }
@@ -190,7 +267,7 @@ namespace App13___compressHelper
 
         private void Zip_onTapped(object sender, TappedRoutedEventArgs e)
         {
-
+            
         }
 
     }
