@@ -160,6 +160,21 @@ namespace App13___compressHelper
                                 }
                             }
                         }
+                        else
+                        {
+                            StorageFile file = await selectedFolder.CreateFileAsync(Reader.Entry.FilePath, CreationCollisionOption.OpenIfExists);
+                            Stream newFileStream = await file.OpenStreamForWriteAsync();
+
+                            MemoryStream streamEntry = new MemoryStream();
+                            Reader.WriteEntryTo(streamEntry);
+                            //entry.WriteTo(streamEntry);
+                            // buffer for extraction data
+                            byte[] data = streamEntry.ToArray();
+
+                            newFileStream.Write(data, 0, data.Length);
+                            newFileStream.Flush();
+                            newFileStream.Dispose();
+                        }
                         #region commented old code
                         //StorageFile newFile = await folder.CreateFileAsync(Reader.Entry.FilePath, CreationCollisionOption.FailIfExists);
                         //Stream newFileStream = await newFile.OpenStreamForWriteAsync();
