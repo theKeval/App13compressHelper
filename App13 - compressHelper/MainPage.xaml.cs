@@ -112,12 +112,12 @@ namespace App13___compressHelper
 
 
         public StorageFolder selectedFolder;
-        private async Task extractCompressedFile_ReaderFactory(StorageFile sourceCompressedFile)      //, StorageFolder destinationFolder
+        private async Task extractCompressedFile_ReaderFactory(StorageFile sourceCompressedFile, StorageFolder destinationFolder)      //, StorageFolder destinationFolder
         {
             using (Stream fileStream = await sourceCompressedFile.OpenStreamForReadAsync())
             {
                 var Reader = ReaderFactory.Open(fileStream);
-                StorageFolder folder = await ApplicationData.Current.LocalFolder.CreateFolderAsync(sourceCompressedFile.DisplayName, CreationCollisionOption.OpenIfExists);
+                StorageFolder folder = await destinationFolder.CreateFolderAsync(sourceCompressedFile.DisplayName, CreationCollisionOption.OpenIfExists);
 
                 //foreach (var entry in archive.Entries)
                 while (Reader.MoveToNextEntry())
@@ -259,16 +259,16 @@ namespace App13___compressHelper
                 filePicker.FileTypeFilter.Add(".rar");
                 StorageFile abc = await filePicker.PickSingleFileAsync();
 
-                //var folderPicker = new FolderPicker();
-                //folderPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                //folderPicker.FileTypeFilter.Add(".png");
-                //folderPicker.FileTypeFilter.Add(".jpg");
-                //folderPicker.FileTypeFilter.Add(".txt");
-                //StorageFolder xyz = await folderPicker.PickSingleFolderAsync();
+                var folderPicker = new FolderPicker();
+                folderPicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                folderPicker.FileTypeFilter.Add(".png");
+                folderPicker.FileTypeFilter.Add(".jpg");
+                folderPicker.FileTypeFilter.Add(".txt");
+                StorageFolder xyz = await folderPicker.PickSingleFolderAsync();
 
 
                 //await extractCompressedFile_ArchiveFactory(abc);
-                await extractCompressedFile_ReaderFactory(abc);
+                await extractCompressedFile_ReaderFactory(abc, xyz);
 
                 tb.Text = "Done.";
 
